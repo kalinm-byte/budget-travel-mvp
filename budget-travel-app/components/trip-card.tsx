@@ -16,7 +16,7 @@ const BADGE_STYLES: Record<string, { className: string; icon: typeof Tag }> = {
     className: "bg-accent text-accent-foreground",
     icon: Zap,
   },
-  "Best Vibe Match": {
+  "Fewest Stops": {
     className: "bg-secondary text-secondary-foreground border border-border",
     icon: Sparkles,
   },
