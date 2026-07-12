@@ -92,7 +92,7 @@ const DESTINATIONS_BY_VIBE: Record<Vibe, DestinationCandidate[]> = {
   ],
 }
 
-export const SERPAPI_DESTINATION_LIMIT = 20
+export const SERPAPI_DESTINATION_LIMIT = 3
 
 function shuffleDestinations(destinations: DestinationCandidate[]) {
   const shuffled = [...destinations]
