@@ -4,19 +4,54 @@ import { useRef, useState } from "react"
 import { Plane } from "lucide-react"
 import { SearchForm } from "@/components/search-form"
 import { TripCard } from "@/components/trip-card"
-import { findTrips, type ScoredTrip, type SearchInput } from "@/lib/trips"
+import type { ScoredTrip, SearchInput } from "@/lib/trips"
+
+type TripSearchResponse = {
+  trips: ScoredTrip[]
+}
 
 export default function Page() {
   const [results, setResults] = useState<ScoredTrip[] | null>(null)
   const [query, setQuery] = useState<SearchInput | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
 
-  function handleSearch(input: SearchInput) {
+  async function handleSearch(input: SearchInput) {
     setQuery(input)
-    setResults(findTrips(input))
+    setIsSearching(true)
+    setSearchError(null)
+    setResults(null)
+
     requestAnimationFrame(() => {
       resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
     })
+
+    try {
+      const response = await fetch("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          airport: input.airport,
+          budget: input.budget,
+          dates: input.dates,
+          vibe: input.vibe,
+          stops: input.stops,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Trip search failed")
+      }
+
+      const data = (await response.json()) as TripSearchResponse
+      setResults(data.trips)
+    } catch {
+      setResults([])
+      setSearchError("We couldn't complete that search. Please try again.")
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   return (
@@ -89,7 +124,27 @@ export default function Page() {
         ref={resultsRef}
         className="mx-auto max-w-5xl scroll-mt-6 px-5 pb-20"
       >
-        {results && query && (
+        {isSearching && query && (
+          <div className="py-10 text-center">
+            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+              Checking flights
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Looking for {query.vibe.toLowerCase()} trips from {query.airport.toUpperCase()}.
+            </p>
+          </div>
+        )}
+
+        {!isSearching && searchError && (
+          <div className="py-10 text-center">
+            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+              Search unavailable
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">{searchError}</p>
+          </div>
+        )}
+
+        {!isSearching && results && query && !searchError && (
           <>
             <div className="mb-6 text-center">
               <h2 className="font-heading text-2xl font-semibold tracking-tight">
@@ -99,7 +154,7 @@ export default function Page() {
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {results.length > 0
-                  ? `Based on a $${query.budget} budget from ${query.airport.toUpperCase()} · ${query.vibe} vibe`
+                  ? `Based on a $${query.budget} budget from ${query.airport.toUpperCase()} / ${query.vibe} vibe`
                   : "Try raising your budget or allowing more stops."}
               </p>
             </div>
@@ -114,7 +169,7 @@ export default function Page() {
 
       <footer className="border-t border-border">
         <div className="mx-auto max-w-5xl px-5 py-8 text-center text-sm text-muted-foreground">
-          Layover — smarter trips for real budgets. Prices are estimates for demonstration.
+          Layover: smarter trips for real budgets. Flight prices can change; check availability before booking.
         </div>
       </footer>
     </main>
