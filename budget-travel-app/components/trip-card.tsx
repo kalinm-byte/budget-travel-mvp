@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Clock, Plane, MapPin, Check, Heart, Sparkles, Zap, Tag } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Clock, Plane, MapPin, ExternalLink, Sparkles, Zap, Tag } from "lucide-react"
+import { buttonVariants } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { type ScoredTrip, stopsLabel, travelTimeLabel } from "@/lib/trips"
@@ -23,7 +22,6 @@ const BADGE_STYLES: Record<string, { className: string; icon: typeof Tag }> = {
 }
 
 export function TripCard({ trip }: { trip: ScoredTrip }) {
-  const [saved, setSaved] = useState(false)
   const badge = trip.badge ? BADGE_STYLES[trip.badge] : null
   const BadgeIcon = badge?.icon
 
@@ -57,7 +55,9 @@ export function TripCard({ trip }: { trip: ScoredTrip }) {
           <span className="text-3xl font-bold tracking-tight text-foreground">
             ${trip.price}
           </span>
-          <span className="pb-1 text-sm text-muted-foreground">est. round-trip</span>
+          <span className="pb-1 text-sm text-muted-foreground">
+            {trip.currency ?? "USD"} observed round-trip
+          </span>
         </div>
       </div>
 
@@ -86,24 +86,36 @@ export function TripCard({ trip }: { trip: ScoredTrip }) {
         <p className="text-sm leading-relaxed text-muted-foreground">
           {trip.matchReason}
         </p>
-        <Button
-          variant={saved ? "secondary" : "outline"}
-          className="mt-5 w-full gap-2 rounded-xl"
-          onClick={() => setSaved((s) => !s)}
-          aria-pressed={saved}
-        >
-          {saved ? (
-            <>
-              <Check className="size-4" aria-hidden="true" />
-              Saved
-            </>
-          ) : (
-            <>
-              <Heart className="size-4" aria-hidden="true" />
-              Save Trip
-            </>
-          )}
-        </Button>
+
+        {(trip.airline || trip.flightSummary) && (
+          <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+            {trip.airline && <p>{trip.airline}</p>}
+            {trip.flightSummary && <p>{trip.flightSummary}</p>}
+          </div>
+        )}
+
+        {trip.affiliateUrl ? (
+          <a
+            href={trip.affiliateUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={cn(buttonVariants({ variant: "outline" }), "mt-5 w-full gap-2 rounded-xl")}
+          >
+            <ExternalLink className="size-4" aria-hidden="true" />
+            Check availability
+          </a>
+        ) : (
+          <span
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "mt-5 w-full gap-2 rounded-xl opacity-60",
+            )}
+            aria-disabled="true"
+          >
+            <ExternalLink className="size-4" aria-hidden="true" />
+            Check availability
+          </span>
+        )}
       </div>
     </Card>
   )
