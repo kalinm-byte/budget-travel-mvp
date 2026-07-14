@@ -80,6 +80,8 @@ function normalizeResult(
     stops,
     airline,
     flightSummary: `${airline} round trip, ${route}`,
+    outboundDate: input.outboundDate,
+    returnDate: input.returnDate,
     dataSource: "SerpApi Google Flights",
     affiliateProvider: null,
     affiliateUrl: googleFlightsUrl ?? flightDetailsUrl(input, destination),
@@ -128,6 +130,20 @@ async function searchDestination(
     .filter((trip): trip is TripOption => Boolean(trip))
 }
 
+function distinctDestinationsByRank(trips: TripOption[]) {
+  const seenDestinationAirports = new Set<string>()
+  const distinctTrips: TripOption[] = []
+
+  for (const trip of trips) {
+    if (seenDestinationAirports.has(trip.destinationAirport)) continue
+
+    seenDestinationAirports.add(trip.destinationAirport)
+    distinctTrips.push(trip)
+  }
+
+  return distinctTrips
+}
+
 export class SerpApiGoogleFlightsProvider implements FlightProvider {
   name = "serpapi-google-flights"
 
@@ -143,6 +159,6 @@ export class SerpApiGoogleFlightsProvider implements FlightProvider {
       result.status === "fulfilled" ? result.value : [],
     )
 
-    return rankTripOptions(trips, input).slice(0, 3)
+    return distinctDestinationsByRank(rankTripOptions(trips, input)).slice(0, 3)
   }
 }
