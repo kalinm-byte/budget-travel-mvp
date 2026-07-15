@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Plane } from "lucide-react"
+import { Luggage, Plane } from "lucide-react"
 import { SearchForm } from "@/components/search-form"
 import { TripCard } from "@/components/trip-card"
 import type { ScoredTrip, SearchInput } from "@/lib/trips"
@@ -14,15 +14,14 @@ export default function Page() {
   const [results, setResults] = useState<ScoredTrip[] | null>(null)
   const [query, setQuery] = useState<SearchInput | null>(null)
   const [isSearching, setIsSearching] = useState(false)
-  const [searchError, setSearchError] = useState<string | null>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
 
   async function handleSearch(input: SearchInput) {
+    if (isSearching) return
+
     setQuery(input)
     setIsSearching(true)
-    setSearchError(null)
     setResults(null)
-
     requestAnimationFrame(() => {
       resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
     })
@@ -31,24 +30,15 @@ export default function Page() {
       const response = await fetch("/api/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          airport: input.airport,
-          budget: input.budget,
-          dates: input.dates,
-          vibe: input.vibe,
-          stops: input.stops,
-        }),
+        body: JSON.stringify(input),
       })
 
-      if (!response.ok) {
-        throw new Error("Trip search failed")
-      }
+      if (!response.ok) throw new Error("Trip search failed")
 
       const data = (await response.json()) as TripSearchResponse
       setResults(data.trips)
     } catch {
       setResults([])
-      setSearchError("We couldn't complete that search. Please try again.")
     } finally {
       setIsSearching(false)
     }
@@ -115,7 +105,7 @@ export default function Page() {
 
       {/* Search */}
       <section id="search" className="mx-auto max-w-2xl scroll-mt-6 px-5 py-8">
-        <SearchForm onSearch={handleSearch} />
+        <SearchForm onSearch={handleSearch} isSearching={isSearching} />
       </section>
 
       {/* Results */}
@@ -126,25 +116,26 @@ export default function Page() {
       >
         {isSearching && query && (
           <div className="py-10 text-center">
+            <div
+              className="travel-loading mx-auto mb-5"
+              aria-hidden="true"
+            >
+              <div className="travel-loading__path" />
+              <Luggage className="travel-loading__luggage" />
+              <Plane className="travel-loading__plane" />
+            </div>
             <h2 className="font-heading text-2xl font-semibold tracking-tight">
               Checking flights
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Looking for {query.vibe.toLowerCase()} trips from {query.airport.toUpperCase()}.
             </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              This may take a few seconds while we compare live fares.
+            </p>
           </div>
         )}
-
-        {!isSearching && searchError && (
-          <div className="py-10 text-center">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
-              Search unavailable
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">{searchError}</p>
-          </div>
-        )}
-
-        {!isSearching && results && query && !searchError && (
+        {results && query && (
           <>
             <div className="mb-6 text-center">
               <h2 className="font-heading text-2xl font-semibold tracking-tight">
