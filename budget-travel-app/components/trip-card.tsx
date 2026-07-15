@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, Plane, MapPin, ExternalLink, Sparkles, Zap, Tag } from "lucide-react"
+import { CalendarDays, Clock, Plane, MapPin, ExternalLink, Sparkles, Zap, Tag } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -37,6 +37,12 @@ export function TripCard({ trip }: { trip: ScoredTrip }) {
           <h3 className="font-heading text-xl font-semibold leading-tight text-foreground text-balance">
             {trip.destination}
           </h3>
+          {dateRange && (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <CalendarDays className="size-3.5" aria-hidden="true" />
+              {dateRange}
+            </div>
+          )}
         </div>
         {badge && BadgeIcon && (
           <span
@@ -87,9 +93,8 @@ export function TripCard({ trip }: { trip: ScoredTrip }) {
         <p className="text-sm leading-relaxed text-muted-foreground">
           {trip.matchReason}
         </p>
-        {(dateRange || trip.airline || trip.flightSummary) && (
+        {(trip.airline || trip.flightSummary) && (
           <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-            {dateRange && <p>{dateRange}</p>}
             {trip.airline && <p>{trip.airline}</p>}
             {trip.flightSummary && <p>{trip.flightSummary}</p>}
           </div>
