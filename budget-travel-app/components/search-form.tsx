@@ -27,8 +27,10 @@ const VIBES: Vibe[] = [
 
 export function SearchForm({
   onSearch,
+  isSearching = false,
 }: {
   onSearch: (input: SearchInput) => void
+  isSearching?: boolean
 }) {
   const [airport, setAirport] = useState("")
   const [budget, setBudget] = useState("")
@@ -38,6 +40,8 @@ export function SearchForm({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (isSearching) return
+
     const parsedBudget = Number.parseInt(budget, 10)
     onSearch({
       airport: airport.trim() || "JFK",
@@ -151,9 +155,10 @@ export function SearchForm({
       <Button
         type="submit"
         size="lg"
+        disabled={isSearching}
         className="mt-6 h-13 w-full gap-2 rounded-xl text-base font-semibold"
       >
-        Find Trips
+        {isSearching ? "Checking flights" : "Find Trips"}
         <ArrowRight className="size-4" aria-hidden="true" />
       </Button>
     </form>
