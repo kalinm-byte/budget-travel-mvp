@@ -9,8 +9,6 @@ export type Vibe =
 
 export type Stops = "nonstop" | "one" | "cheapest"
 
-export type AffiliateUrlType = "flight_details" | "availability" | "none"
-
 export type Trip = {
   id: string
   destination: string
@@ -23,10 +21,12 @@ export type Trip = {
   stops: 0 | 1 | 2
   airline?: string
   flightSummary?: string
+  outboundDate?: string
+  returnDate?: string
   dataSource?: string
   affiliateProvider?: string | null
   affiliateUrl?: string | null
-  affiliateUrlType?: AffiliateUrlType
+  affiliateUrlType?: "flight_details" | "availability" | "none"
   vibes: Vibe[]
   /** Home airports this trip can depart from. */
   origins: string[]
@@ -57,10 +57,12 @@ export type TripOption = {
   stops: 0 | 1 | 2
   airline: string
   flightSummary: string
+  outboundDate: string
+  returnDate: string
   dataSource: string
   affiliateProvider: string | null
   affiliateUrl: string | null
-  affiliateUrlType: AffiliateUrlType
+  affiliateUrlType: "flight_details" | "availability" | "none"
 }
 
 function googleFlightsUrl(destinationAirport: string) {
@@ -68,7 +70,9 @@ function googleFlightsUrl(destinationAirport: string) {
 }
 
 function tripDefaults(trip: {
+  id: string
   destinationAirport: string
+  price: number
   travelMinutes: number
   stops: 0 | 1 | 2
 }): Pick<
@@ -96,7 +100,10 @@ function tripDefaults(trip: {
   }
 }
 
-// A curated catalog of 30 trips used as the fallback recommendations.
+// Common hub airports used to populate origins across the catalog.
+const ALL_HUBS = ["JFK", "LAX", "ORD", "ATL", "DFW", "DEN", "SFO", "SEA", "MIA", "BOS"]
+
+// A curated catalog of 30 trips used to power the demo recommendations.
 const CATALOG: Trip[] = [
   {
     id: "cun",
@@ -104,8 +111,16 @@ const CATALOG: Trip[] = [
     destinationAirport: "CUN",
     region: "International",
     price: 268,
+    currency: "USD",
     travelMinutes: 230,
+    travelTimeMinutes: 230,
     stops: 0,
+    airline: "Multiple airlines",
+    flightSummary: "Nonstop round trip to CUN",
+    dataSource: "Mock catalog",
+    affiliateProvider: null,
+    affiliateUrl: googleFlightsUrl("CUN"),
+    affiliateUrlType: "flight_details",
     vibes: ["Beach", "International", "Girls Trip", "Romantic"],
     origins: ["JFK", "ATL", "DFW", "ORD", "MIA"],
     blurb: "Warm turquoise water and all-inclusive resorts within a short hop.",
@@ -113,7 +128,6 @@ const CATALOG: Trip[] = [
   {
     id: "mia",
     destination: "Miami, FL",
-    destinationAirport: "MIA",
     region: "Domestic",
     price: 154,
     travelMinutes: 185,
@@ -125,7 +139,6 @@ const CATALOG: Trip[] = [
   {
     id: "den",
     destination: "Denver, CO",
-    destinationAirport: "DEN",
     region: "Domestic",
     price: 132,
     travelMinutes: 205,
@@ -137,7 +150,6 @@ const CATALOG: Trip[] = [
   {
     id: "sju",
     destination: "San Juan, Puerto Rico",
-    destinationAirport: "SJU",
     region: "International",
     price: 221,
     travelMinutes: 255,
@@ -149,7 +161,6 @@ const CATALOG: Trip[] = [
   {
     id: "nyc",
     destination: "New York, NY",
-    destinationAirport: "JFK",
     region: "Domestic",
     price: 118,
     travelMinutes: 165,
@@ -161,7 +172,6 @@ const CATALOG: Trip[] = [
   {
     id: "lis",
     destination: "Lisbon, Portugal",
-    destinationAirport: "LIS",
     region: "International",
     price: 489,
     travelMinutes: 540,
@@ -173,7 +183,6 @@ const CATALOG: Trip[] = [
   {
     id: "slc",
     destination: "Salt Lake City, UT",
-    destinationAirport: "SLC",
     region: "Domestic",
     price: 146,
     travelMinutes: 220,
@@ -185,7 +194,6 @@ const CATALOG: Trip[] = [
   {
     id: "nas",
     destination: "Nassau, Bahamas",
-    destinationAirport: "NAS",
     region: "International",
     price: 243,
     travelMinutes: 240,
@@ -197,7 +205,6 @@ const CATALOG: Trip[] = [
   {
     id: "avl",
     destination: "Asheville, NC",
-    destinationAirport: "AVL",
     region: "Domestic",
     price: 128,
     travelMinutes: 175,
@@ -209,7 +216,6 @@ const CATALOG: Trip[] = [
   {
     id: "cdmx",
     destination: "Mexico City, Mexico",
-    destinationAirport: "MEX",
     region: "International",
     price: 212,
     travelMinutes: 300,
@@ -221,7 +227,6 @@ const CATALOG: Trip[] = [
   {
     id: "lax",
     destination: "Los Angeles, CA",
-    destinationAirport: "LAX",
     region: "Domestic",
     price: 178,
     travelMinutes: 360,
@@ -231,9 +236,8 @@ const CATALOG: Trip[] = [
     blurb: "Sunny beaches, Hollywood glamour, and endless taco trucks.",
   },
   {
-    id: "banff",
+    id: "lakeluise",
     destination: "Banff, Canada",
-    destinationAirport: "YYC",
     region: "International",
     price: 398,
     travelMinutes: 420,
@@ -245,7 +249,6 @@ const CATALOG: Trip[] = [
   {
     id: "nola",
     destination: "New Orleans, LA",
-    destinationAirport: "MSY",
     region: "Domestic",
     price: 162,
     travelMinutes: 215,
@@ -257,7 +260,6 @@ const CATALOG: Trip[] = [
   {
     id: "san",
     destination: "San Diego, CA",
-    destinationAirport: "SAN",
     region: "Domestic",
     price: 189,
     travelMinutes: 345,
@@ -269,7 +271,6 @@ const CATALOG: Trip[] = [
   {
     id: "cabo",
     destination: "Cabo San Lucas, Mexico",
-    destinationAirport: "SJD",
     region: "International",
     price: 312,
     travelMinutes: 330,
@@ -281,7 +282,6 @@ const CATALOG: Trip[] = [
   {
     id: "sea",
     destination: "Seattle, WA",
-    destinationAirport: "SEA",
     region: "Domestic",
     price: 198,
     travelMinutes: 350,
@@ -293,7 +293,6 @@ const CATALOG: Trip[] = [
   {
     id: "chs",
     destination: "Charleston, SC",
-    destinationAirport: "CHS",
     region: "Domestic",
     price: 144,
     travelMinutes: 165,
@@ -305,7 +304,6 @@ const CATALOG: Trip[] = [
   {
     id: "pdx",
     destination: "Portland, OR",
-    destinationAirport: "PDX",
     region: "Domestic",
     price: 207,
     travelMinutes: 365,
@@ -315,9 +313,8 @@ const CATALOG: Trip[] = [
     blurb: "Quirky neighborhoods, food carts, and forest day trips.",
   },
   {
-    id: "mbj",
+    id: "mont",
     destination: "Montego Bay, Jamaica",
-    destinationAirport: "MBJ",
     region: "International",
     price: 289,
     travelMinutes: 255,
@@ -329,7 +326,6 @@ const CATALOG: Trip[] = [
   {
     id: "yvr",
     destination: "Vancouver, Canada",
-    destinationAirport: "YVR",
     region: "International",
     price: 276,
     travelMinutes: 330,
@@ -341,7 +337,6 @@ const CATALOG: Trip[] = [
   {
     id: "rsw",
     destination: "Fort Myers, FL",
-    destinationAirport: "RSW",
     region: "Domestic",
     price: 138,
     travelMinutes: 195,
@@ -353,7 +348,6 @@ const CATALOG: Trip[] = [
   {
     id: "phx",
     destination: "Phoenix, AZ",
-    destinationAirport: "PHX",
     region: "Domestic",
     price: 156,
     travelMinutes: 300,
@@ -365,7 +359,6 @@ const CATALOG: Trip[] = [
   {
     id: "aus",
     destination: "Austin, TX",
-    destinationAirport: "AUS",
     region: "Domestic",
     price: 167,
     travelMinutes: 230,
@@ -375,9 +368,8 @@ const CATALOG: Trip[] = [
     blurb: "Live music, barbecue, and a buzzing, laid-back food scene.",
   },
   {
-    id: "puj",
+    id: "punta",
     destination: "Punta Cana, Dominican Republic",
-    destinationAirport: "PUJ",
     region: "International",
     price: 331,
     travelMinutes: 270,
@@ -389,7 +381,6 @@ const CATALOG: Trip[] = [
   {
     id: "bzn",
     destination: "Bozeman, MT",
-    destinationAirport: "BZN",
     region: "Domestic",
     price: 254,
     travelMinutes: 320,
@@ -401,7 +392,6 @@ const CATALOG: Trip[] = [
   {
     id: "rome",
     destination: "Rome, Italy",
-    destinationAirport: "FCO",
     region: "International",
     price: 612,
     travelMinutes: 600,
@@ -413,7 +403,6 @@ const CATALOG: Trip[] = [
   {
     id: "sfo",
     destination: "San Francisco, CA",
-    destinationAirport: "SFO",
     region: "Domestic",
     price: 199,
     travelMinutes: 370,
@@ -423,9 +412,8 @@ const CATALOG: Trip[] = [
     blurb: "Iconic bridges, foggy hills, and standout food neighborhoods.",
   },
   {
-    id: "sav",
+    id: "savannah",
     destination: "Savannah, GA",
-    destinationAirport: "SAV",
     region: "Domestic",
     price: 149,
     travelMinutes: 180,
@@ -435,9 +423,8 @@ const CATALOG: Trip[] = [
     blurb: "Oak-lined squares, ghost tours, and southern hospitality.",
   },
   {
-    id: "aua",
+    id: "aruba",
     destination: "Oranjestad, Aruba",
-    destinationAirport: "AUA",
     region: "International",
     price: 358,
     travelMinutes: 290,
@@ -447,9 +434,8 @@ const CATALOG: Trip[] = [
     blurb: "Year-round sun, calm waters, and powdery white sand.",
   },
   {
-    id: "jac",
+    id: "jackson",
     destination: "Jackson Hole, WY",
-    destinationAirport: "JAC",
     region: "Domestic",
     price: 287,
     travelMinutes: 340,
@@ -493,36 +479,40 @@ export function findTrips(input: SearchInput): ScoredTrip[] {
   const airport = input.airport.trim().toUpperCase()
   const maxStops = maxStopsFor(input.stops)
 
+  // Filter by budget, airport, vibe, and max stops.
   const candidates = CATALOG.filter(
-    (trip) =>
-      trip.price <= input.budget &&
-      trip.stops <= maxStops &&
-      trip.origins.includes(airport) &&
-      trip.vibes.includes(input.vibe),
+    (t) =>
+      t.price <= input.budget &&
+      t.stops <= maxStops &&
+      t.origins.includes(airport) &&
+      t.vibes.includes(input.vibe),
   )
 
   if (candidates.length === 0) return []
 
-  const minPrice = Math.min(...candidates.map((trip) => trip.price))
-  const maxPrice = Math.max(...candidates.map((trip) => trip.price))
-  const minTime = Math.min(...candidates.map((trip) => trip.travelMinutes))
-  const maxTime = Math.max(...candidates.map((trip) => trip.travelMinutes))
+  // Normalize each ranking dimension to 0..1 across the candidate set.
+  const minPrice = Math.min(...candidates.map((t) => t.price))
+  const maxPrice = Math.max(...candidates.map((t) => t.price))
+  const minTime = Math.min(...candidates.map((t) => t.travelMinutes))
+  const maxTime = Math.max(...candidates.map((t) => t.travelMinutes))
 
   const norm = (value: number, min: number, max: number) =>
     max === min ? 0 : (value - min) / (max - min)
 
+  // Rank top 3 by best price, shortest travel time, and fewest stops.
   const ranked = [...candidates]
-    .map((trip) => {
-      const priceScore = norm(trip.price, minPrice, maxPrice)
-      const timeScore = norm(trip.travelMinutes, minTime, maxTime)
-      const stopScore = trip.stops / 2
+    .map((t) => {
+      const priceScore = norm(t.price, minPrice, maxPrice)
+      const timeScore = norm(t.travelMinutes, minTime, maxTime)
+      const stopScore = t.stops / 2
       const score = priceScore * 0.45 + timeScore * 0.35 + stopScore * 0.2
-      return { trip, score }
+      return { trip: t, score }
     })
     .sort((a, b) => a.score - b.score)
     .slice(0, 3)
-    .map((rankedTrip) => rankedTrip.trip)
+    .map((r) => r.trip)
 
+  // Award badges for the standout in each ranking dimension.
   const cheapest = [...ranked].sort((a, b) => a.price - b.price)[0]
   const fastest = [...ranked].sort((a, b) => a.travelMinutes - b.travelMinutes)[0]
   const fewestStops = [...ranked].sort((a, b) => a.stops - b.stops)[0]
@@ -531,7 +521,6 @@ export function findTrips(input: SearchInput): ScoredTrip[] {
 
   return ranked.map((trip) => {
     let badge: Badge | undefined
-
     if (trip.id === cheapest.id && !usedBadges.has("Best Deal")) {
       badge = "Best Deal"
     } else if (trip.id === fastest.id && !usedBadges.has("Shortest Travel")) {
@@ -539,7 +528,6 @@ export function findTrips(input: SearchInput): ScoredTrip[] {
     } else if (trip.id === fewestStops.id && trip.stops === 0 && !usedBadges.has("Fewest Stops")) {
       badge = "Fewest Stops"
     }
-
     if (badge) usedBadges.add(badge)
 
     const reasons: string[] = []
