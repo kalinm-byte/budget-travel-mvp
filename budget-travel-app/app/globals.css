@@ -128,3 +128,66 @@
     @apply font-sans;
   }
 }
+
+.travel-loading {
+  position: relative;
+  height: 3.25rem;
+  width: min(16rem, 72vw);
+}
+
+.travel-loading__path {
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  top: 1.85rem;
+  border-top: 2px dashed color-mix(in oklch, var(--primary) 42%, transparent);
+}
+
+.travel-loading__luggage,
+.travel-loading__plane {
+  position: absolute;
+  color: var(--primary);
+}
+
+.travel-loading__luggage {
+  bottom: 0.6rem;
+  left: 0.55rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  animation: luggage-roll 1.8s ease-in-out infinite;
+}
+
+.travel-loading__plane {
+  right: 0.55rem;
+  top: 0.35rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  animation: plane-float 2.4s ease-in-out infinite;
+}
+
+@keyframes luggage-roll {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateX(2.25rem) translateY(-0.15rem) rotate(4deg);
+  }
+}
+
+@keyframes plane-float {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0) rotate(8deg);
+  }
+  50% {
+    transform: translateX(-1.2rem) translateY(0.45rem) rotate(2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .travel-loading__luggage,
+  .travel-loading__plane {
+    animation: none;
+  }
+}
