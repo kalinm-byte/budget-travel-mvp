@@ -71,6 +71,8 @@ function toScoredTrip(option: TripOption, input: SearchInput, index: number): Sc
     stops: option.stops,
     airline: option.airline,
     flightSummary: option.flightSummary,
+    outboundDate: option.outboundDate,
+    returnDate: option.returnDate,
     dataSource: option.dataSource,
     affiliateProvider: option.affiliateProvider,
     affiliateUrl: option.affiliateUrl,
