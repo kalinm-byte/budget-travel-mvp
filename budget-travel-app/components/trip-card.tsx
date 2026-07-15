@@ -24,6 +24,7 @@ const BADGE_STYLES: Record<string, { className: string; icon: typeof Tag }> = {
 export function TripCard({ trip }: { trip: ScoredTrip }) {
   const badge = trip.badge ? BADGE_STYLES[trip.badge] : null
   const BadgeIcon = badge?.icon
+  const dateRange = formatDateRange(trip.outboundDate, trip.returnDate)
 
   return (
     <Card className="flex flex-col overflow-hidden rounded-3xl border-border p-0 shadow-sm transition-shadow hover:shadow-lg">
@@ -86,14 +87,13 @@ export function TripCard({ trip }: { trip: ScoredTrip }) {
         <p className="text-sm leading-relaxed text-muted-foreground">
           {trip.matchReason}
         </p>
-
-        {(trip.airline || trip.flightSummary) && (
+        {(dateRange || trip.airline || trip.flightSummary) && (
           <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+            {dateRange && <p>{dateRange}</p>}
             {trip.airline && <p>{trip.airline}</p>}
             {trip.flightSummary && <p>{trip.flightSummary}</p>}
           </div>
         )}
-
         {trip.affiliateUrl ? (
           <a
             href={trip.affiliateUrl}
@@ -119,4 +119,35 @@ export function TripCard({ trip }: { trip: ScoredTrip }) {
       </div>
     </Card>
   )
+}
+
+function formatDateRange(outboundDate?: string, returnDate?: string) {
+  if (!outboundDate || !returnDate) return null
+
+  const outbound = parseDate(outboundDate)
+  const returning = parseDate(returnDate)
+  if (!outbound || !returning) return null
+
+  const outboundMonth = monthLabel(outbound)
+  const returnMonth = monthLabel(returning)
+  const outboundDay = outbound.getUTCDate()
+  const returnDay = returning.getUTCDate()
+
+  if (outboundMonth === returnMonth) {
+    return `${outboundMonth} ${outboundDay}\u2013${returnDay}`
+  }
+
+  return `${outboundMonth} ${outboundDay}\u2013${returnMonth} ${returnDay}`
+}
+
+function parseDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number)
+
+  if (!year || !month || !day) return null
+
+  return new Date(Date.UTC(year, month - 1, day))
+}
+
+function monthLabel(date: Date) {
+  return date.toLocaleString("en-US", { month: "short", timeZone: "UTC" })
 }
